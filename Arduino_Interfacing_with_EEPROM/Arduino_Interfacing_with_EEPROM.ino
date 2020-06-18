@@ -17,10 +17,6 @@ const char SETAL = 0x67;          //Write ‘ 0xFF ’ to entire array
 const char dev_addr = 0xA0;       //Device address
 const char str_hdr = 0x55;        //Start Header command
 
-
-char name[10];
-
-
 /* 
  *  EEPROM Acknowledgement Master Sent HIGH and Slave Sent HIGH Pulse
  */
@@ -29,7 +25,7 @@ inline void Ack_MAK_SAK() {
   digitalWrite(IO_Pin,HIGH);
   _delay_us(TE);
   pinMode(IO_Pin, INPUT);
-  if(digitalRead(IO_Pin) == 1){
+  if(digitalRead(IO_Pin) == 1) {
     //Serial.println("Slave Acknowledgement Received");
     _delay_us(TE);
   }
@@ -48,7 +44,7 @@ inline void Ack_NOMAK_SAK() {
   digitalWrite(IO_Pin,LOW);
   _delay_us(TE);
   pinMode(IO_Pin, INPUT);
-  if(digitalRead(IO_Pin) == 1){
+  if(digitalRead(IO_Pin) == 1) {
     //Serial.println("Slave Acknowledgement Received");
     _delay_us(TE);
   }
@@ -64,7 +60,17 @@ inline void Ack_NOMAK_SAK() {
  */
 void eeprom_tx(char data) {
   pinMode(IO_Pin, OUTPUT);
-  for (int i=7; i>=0;--i) {
+  /*
+   * It's sent MSB first
+   * 
+   * for (int i=7; i>=0;--i) {
+    (data & (1 << i))?digitalWrite(IO_Pin,HIGH):digitalWrite(IO_Pin,LOW);
+    _delay_us(TE);
+  }*/
+
+  /*  LSB First  */
+
+  for (int i=0; i<8;i++) {
     (data & (1 << i))?digitalWrite(IO_Pin,HIGH):digitalWrite(IO_Pin,LOW);
     _delay_us(TE);
   }
@@ -171,7 +177,7 @@ void write_data(uint8_t address, char *data) {
 /* 
  *  EEPROM Read Data to EEPROM Memory
  */
-void read_data(uint8_t address, uint8_t leng) {
+void read_data(uint8_t address, uint8_t leng, char *rec_buff) {
   //consecutive_start();
   eeprom_tx(READ);
   Ack_MAK_SAK();
@@ -180,7 +186,7 @@ void read_data(uint8_t address, uint8_t leng) {
   eeprom_tx(address);
   Ack_MAK_SAK();
   for(int i=0;i<leng;i++) {
-    name[i] = eeprom_rx();
+    rec_buff[i] = eeprom_rx();
     if((i+1) < leng)
       Ack_MAK_SAK();
   }
@@ -207,16 +213,15 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  char data[6] = {"12345"};
+  char data[6] = {"12345"}, rec_buff[10];
   uint8_t addr = 1;
   
   write_data(addr, data);
   delay(2000);
   consecutive_start();
-  read_data(addr, 5);
+  read_data(addr, 5, rec_buff);
 
-  Serial.print("EEPROM Working\nReceived Data : ");
-  for(int i=0;i<5;i++)
-    Serial.println(name[i]);
+  Serial.print("EEPROM Received Data : ");
+  Serial.println(rec_buff);
   while(1) {}
 }
