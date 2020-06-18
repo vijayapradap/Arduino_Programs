@@ -161,9 +161,9 @@ void write_data(uint8_t address, char *data) {
   //consecutive_start();
   eeprom_tx(WRITE);
   Ack_MAK_SAK();
-  eeprom_tx(0x00);
-  Ack_MAK_SAK();
   eeprom_tx(address);
+  Ack_MAK_SAK();
+  eeprom_tx(0x00);
   Ack_MAK_SAK();
   for(int i=0;*data != '\0';i++) {
     eeprom_tx(*data++);
@@ -181,9 +181,9 @@ void read_data(uint8_t address, uint8_t leng, char *rec_buff) {
   //consecutive_start();
   eeprom_tx(READ);
   Ack_MAK_SAK();
-  eeprom_tx(0x00);
-  Ack_MAK_SAK();
   eeprom_tx(address);
+  Ack_MAK_SAK();
+  eeprom_tx(0x00);
   Ack_MAK_SAK();
   for(int i=0;i<leng;i++) {
     rec_buff[i] = eeprom_rx();
